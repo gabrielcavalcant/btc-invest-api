@@ -7,7 +7,7 @@ on:
 jobs:
   api:
     name: API (typecheck, lint, tests, build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16-alpine
@@ -25,8 +25,8 @@ jobs:
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-secret-with-at-least-32-characters-long
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: npm ci
