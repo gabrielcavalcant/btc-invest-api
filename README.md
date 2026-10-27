@@ -60,7 +60,7 @@ npm run start:worker  # worker
 docker compose run --rm --build test
 ```
 
-O serviço `test` fica num *profile* separado: o `docker compose up` normal não o inicia, e a imagem da API não leva os testes. Ele usa um banco próprio (`btc_invest_test`) e o database `1` do Redis, então não apaga os dados da aplicação.
+O serviço `test` fica num _profile_ separado: o `docker compose up` normal não o inicia, e a imagem da API não leva os testes. Ele usa um banco próprio (`btc_invest_test`) e o database `1` do Redis, então não apaga os dados da aplicação.
 
 **Com Node 22 local:**
 
@@ -81,21 +81,21 @@ npm run lint
 Todas as rotas, exceto `POST /account`, `POST /login`, `GET /health` e `/docs`, exigem `Authorization: Bearer <token>`.
 Valores monetários vão e voltam como **string decimal** (`"1500.00"`, `"0.00431234"`) para não perder precisão em clientes JavaScript. Na entrada, `amount` aceita número ou string com até 2 casas decimais. Os corpos podem ser enviados em JSON ou como formulário (`application/x-www-form-urlencoded`) — é o que permite ao Swagger mostrar um campo para cada valor.
 
-| Método | Rota | Descrição | Sucesso |
-| --- | --- | --- | --- |
-| POST | `/account` | Cadastro `{ name, email, password }` | 201 |
-| POST | `/login` | Login `{ email, password }` → `{ token }` | 200 |
-| POST | `/account/deposit` | Depósito em reais `{ amount }` + e-mail | 201 |
-| GET | `/account/balance` | Saldo disponível em reais | 200 |
-| GET | `/btc/price` | Cotação atual: `buy` (compra) e `sell` (venda) | 200 |
-| POST | `/btc/purchase` | Compra de BTC com o saldo `{ amount }` + e-mail | 201 |
-| GET | `/btc` | Posição dos investimentos | 200 |
-| POST | `/btc/sell` | Venda/resgate em reais `{ amount }` + e-mail | 201 |
-| GET | `/extract?from=&to=` | Extrato (padrão: últimos 90 dias) | 200 |
-| GET | `/volume` | Total de BTC comprado e vendido hoje | 200 |
-| GET | `/history` | Cotações das últimas 24h, de 10 em 10 min | 200 |
-| GET | `/health` | Verifica banco e Redis | 200 / 503 |
-| GET | `/docs` | Documentação interativa (Swagger UI); spec OpenAPI em `/docs/json` | 200 |
+| Método | Rota                 | Descrição                                                          | Sucesso   |
+| ------ | -------------------- | ------------------------------------------------------------------ | --------- |
+| POST   | `/account`           | Cadastro `{ name, email, password }`                               | 201       |
+| POST   | `/login`             | Login `{ email, password }` → `{ token }`                          | 200       |
+| POST   | `/account/deposit`   | Depósito em reais `{ amount }` + e-mail                            | 201       |
+| GET    | `/account/balance`   | Saldo disponível em reais                                          | 200       |
+| GET    | `/btc/price`         | Cotação atual: `buy` (compra) e `sell` (venda)                     | 200       |
+| POST   | `/btc/purchase`      | Compra de BTC com o saldo `{ amount }` + e-mail                    | 201       |
+| GET    | `/btc`               | Posição dos investimentos                                          | 200       |
+| POST   | `/btc/sell`          | Venda/resgate em reais `{ amount }` + e-mail                       | 201       |
+| GET    | `/extract?from=&to=` | Extrato (padrão: últimos 90 dias)                                  | 200       |
+| GET    | `/volume`            | Total de BTC comprado e vendido hoje                               | 200       |
+| GET    | `/history`           | Cotações das últimas 24h, de 10 em 10 min                          | 200       |
+| GET    | `/health`            | Verifica banco e Redis                                             | 200 / 503 |
+| GET    | `/docs`              | Documentação interativa (Swagger UI); spec OpenAPI em `/docs/json` | 200       |
 
 Erros seguem sempre o formato `{ "error": { "code", "message", "details?" } }`:
 `400` validação · `401` não autenticado/credenciais inválidas · `404` não encontrado · `409` e-mail já cadastrado · `422` saldo ou investimento insuficiente · `429` excesso de requisições · `503` cotação indisponível.
@@ -106,6 +106,7 @@ Uma collection do Postman está em [`docs/btc-invest.postman_collection.json`](d
 <summary>Exemplos de resposta</summary>
 
 `GET /btc`
+
 ```json
 {
   "quote": { "buy": "331100.00", "sell": "332000.00", "date": "2026-10-26T15:00:00.000Z" },
@@ -120,11 +121,16 @@ Uma collection do Postman está em [`docs/btc-invest.postman_collection.json`](d
       "currentGrossAmount": "3311.00"
     }
   ],
-  "totals": { "investedAmount": "3010.00", "btcAmount": "0.01000000", "currentGrossAmount": "3311.00" }
+  "totals": {
+    "investedAmount": "3010.00",
+    "btcAmount": "0.01000000",
+    "currentGrossAmount": "3311.00"
+  }
 }
 ```
 
 `POST /btc/sell` `{ "amount": 1000 }`
+
 ```json
 {
   "amount": "1000.00",
@@ -132,24 +138,63 @@ Uma collection do Postman está em [`docs/btc-invest.postman_collection.json`](d
   "btcPrice": "331100.00",
   "balance": "7990.00",
   "liquidatedInvestments": ["c0a8..."],
-  "reinvestment": { "investmentId": "7f3e...", "amount": "2311.00", "btcAmount": "0.00697976", "btcPrice": "301000.00" },
+  "reinvestment": {
+    "investmentId": "7f3e...",
+    "amount": "2311.00",
+    "btcAmount": "0.00697976",
+    "btcPrice": "301000.00"
+  },
   "date": "2026-10-26T15:01:10.000Z"
 }
 ```
 
 `GET /extract?from=2026-10-01&to=2026-10-31` — datas ISO 8601; datas sem horário usam o fuso `APP_TIMEZONE` e o `to` inclui o dia inteiro.
+
 ```json
 {
   "from": "2026-10-01T03:00:00.000Z",
   "to": "2026-11-01T02:59:59.999Z",
   "items": [
-    { "id": "…", "type": "DEPOSIT", "date": "…", "amount": "10000.00", "btcAmount": null, "btcPrice": null, "investmentId": null },
-    { "id": "…", "type": "PURCHASE", "date": "…", "amount": "3010.00", "btcAmount": "0.01000000", "btcPrice": "301000.00", "investmentId": "c0a8..." },
-    { "id": "…", "type": "SELL", "date": "…", "amount": "3311.00", "btcAmount": "0.01000000", "btcPrice": "331100.00", "investmentId": "c0a8..." },
-    { "id": "…", "type": "REINVESTMENT", "date": "…", "amount": "2311.00", "btcAmount": "0.00697976", "btcPrice": "301000.00", "investmentId": "7f3e..." }
+    {
+      "id": "…",
+      "type": "DEPOSIT",
+      "date": "…",
+      "amount": "10000.00",
+      "btcAmount": null,
+      "btcPrice": null,
+      "investmentId": null
+    },
+    {
+      "id": "…",
+      "type": "PURCHASE",
+      "date": "…",
+      "amount": "3010.00",
+      "btcAmount": "0.01000000",
+      "btcPrice": "301000.00",
+      "investmentId": "c0a8..."
+    },
+    {
+      "id": "…",
+      "type": "SELL",
+      "date": "…",
+      "amount": "3311.00",
+      "btcAmount": "0.01000000",
+      "btcPrice": "331100.00",
+      "investmentId": "c0a8..."
+    },
+    {
+      "id": "…",
+      "type": "REINVESTMENT",
+      "date": "…",
+      "amount": "2311.00",
+      "btcAmount": "0.00697976",
+      "btcPrice": "301000.00",
+      "investmentId": "7f3e..."
+    }
   ]
 }
 ```
+
 </details>
 
 ## Regras de negócio e decisões
@@ -165,14 +210,14 @@ Uma collection do Postman está em [`docs/btc-invest.postman_collection.json`](d
 
 ### Venda parcial: como o reinvestimento foi interpretado
 
-O enunciado diz que, numa venda parcial, o investimento é liquidado e o troco é *"reinvestido pela cotação original"*. A frase admite duas leituras; a diferença aparece quando o preço muda.
+O enunciado diz que, numa venda parcial, o investimento é liquidado e o troco é _"reinvestido pela cotação original"_. A frase admite duas leituras; a diferença aparece quando o preço muda.
 
 **Exemplo:** comprei R$ 1.000 com o BTC a R$ 100.000 → **0,01 BTC**. O BTC sobe para R$ 200.000 (o investimento vale R$ 2.000) e eu saco **R$ 500**. O investimento é liquidado (R$ 2.000), recebo R$ 500 e sobra um troco de **R$ 1.500**.
 
-| Leitura | Como o troco vira BTC | BTC depois do saque | Resultado |
-| --- | --- | --- | --- |
-| Literal | R$ 1.500 ÷ R$ 100.000 (cotação antiga) | **0,015 BTC** | ❌ o cliente tinha 0,01 BTC, sacou dinheiro e ficou com **mais** BTC: 0,005 BTC (≈ R$ 1.000) criados do nada, pagos pela plataforma |
-| **Adotada** | mantém os satoshis que não precisaram ser vendidos | **0,0075 BTC** | ✅ R$ 500 no saldo + 0,0075 BTC (= R$ 1.500 a preço de hoje): nada é criado nem perdido |
+| Leitura     | Como o troco vira BTC                              | BTC depois do saque | Resultado                                                                                                                           |
+| ----------- | -------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Literal     | R$ 1.500 ÷ R$ 100.000 (cotação antiga)             | **0,015 BTC**       | ❌ o cliente tinha 0,01 BTC, sacou dinheiro e ficou com **mais** BTC: 0,005 BTC (≈ R$ 1.000) criados do nada, pagos pela plataforma |
+| **Adotada** | mantém os satoshis que não precisaram ser vendidos | **0,0075 BTC**      | ✅ R$ 500 no saldo + 0,0075 BTC (= R$ 1.500 a preço de hoje): nada é criado nem perdido                                             |
 
 Na leitura adotada, o novo investimento guarda a **cotação original (R$ 100.000) como referência** e a **data original**, então a posição continua mostrando a variação real (+100%) e ele mantém o lugar na fila FIFO.
 
