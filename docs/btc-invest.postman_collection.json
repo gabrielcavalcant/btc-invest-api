@@ -1,423 +1,371 @@
 {
   "info": {
     "name": "BTC Invest API",
-    "description": "Desafio backend: API de investimento em Bitcoin. Rode 'Login' primeiro: o token é salvo automaticamente.",
+    "description": "Run the requests in order (or the whole collection with the Runner). \"Create Account\" generates a new e-mail on each run and \"Login\" stores the JWT in the {{token}} variable, used by every other request.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000"
-    },
-    {
-      "key": "token",
-      "value": ""
-    }
+    { "key": "apiUrl", "value": "http://localhost:3000" },
+    { "key": "email", "value": "" },
+    { "key": "password", "value": "investor123" },
+    { "key": "token", "value": "" }
   ],
   "item": [
     {
-      "name": "Contas",
+      "name": "Health",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+          }
+        }
+      ],
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{apiUrl}}/health", "host": ["{{apiUrl}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "Account",
       "item": [
         {
-          "name": "Criar conta",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
+          "name": "Create Account",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// new e-mail on each run, so the collection can be run again",
+                  "pm.collectionVariables.set('email', `investor+${Date.now()}@example.com`);"
+                ]
               }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/account",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "account"
-              ]
             },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('returns the account id', () => pm.expect(pm.response.json().id).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Maria Silva\",\n  \"email\": \"maria@example.com\",\n  \"password\": \"super-secret\"\n}"
+              "raw": "{\n  \"name\": \"Fulano da Silva\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            "auth": {
-              "type": "noauth"
-            }
+            "url": { "raw": "{{apiUrl}}/account", "host": ["{{apiUrl}}"], "path": ["account"] }
           }
         },
         {
           "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "login"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"maria@example.com\",\n  \"password\": \"super-secret\"\n}"
-            },
-            "auth": {
-              "type": "noauth"
-            }
-          },
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "const body = pm.response.json();",
-                  "if (body.token) pm.collectionVariables.set('token', body.token);"
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const { token } = pm.response.json();",
+                  "pm.test('returns a JWT', () => pm.expect(token).to.be.a('string'));",
+                  "// used by every authenticated request (collection auth: Bearer {{token}})",
+                  "pm.collectionVariables.set('token', token);"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "Depósito",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/account/deposit",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "account",
-                "deposit"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"amount\": 10000\n}"
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Saldo",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/account/balance",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "account",
-                "balance"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bitcoin",
-      "item": [
-        {
-          "name": "Cotação",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/btc/price",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "btc",
-                "price"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Compra",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/btc/purchase",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "btc",
-                "purchase"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"amount\": 3000\n}"
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Posição dos investimentos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/btc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "btc"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Venda",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/btc/sell",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "btc",
-                "sell"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"amount\": 1000\n}"
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Relatórios",
-      "item": [
-        {
-          "name": "Extrato (últimos 90 dias)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/extract",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "extract"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Extrato (intervalo)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/extract?from=2026-10-01&to=2026-10-31",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "extract"
-              ],
-              "query": [
-                {
-                  "key": "from",
-                  "value": "2026-10-01"
-                },
-                {
-                  "key": "to",
-                  "value": "2026-10-31"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Volume do dia",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/volume",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "volume"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Histórico 24h (10 em 10 min)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/history",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "history"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Health check",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/health",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "health"
-          ]
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{apiUrl}}/login", "host": ["{{apiUrl}}"], "path": ["login"] }
+          }
         },
-        "auth": {
-          "type": "noauth"
+        {
+          "name": "Deposit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('balance includes the deposit', () => pm.expect(pm.response.json().balance).to.eql('1000.00'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{apiUrl}}/account/deposit",
+              "host": ["{{apiUrl}}"],
+              "path": ["account", "deposit"]
+            }
+          }
+        },
+        {
+          "name": "Balance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('returns the balance', () => pm.expect(pm.response.json().balance).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/account/balance",
+              "host": ["{{apiUrl}}"],
+              "path": ["account", "balance"]
+            }
+          }
         }
-      }
+      ]
+    },
+    {
+      "name": "BTC",
+      "item": [
+        {
+          "name": "Get Price",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('returns buy and sell', () => pm.expect(pm.response.json()).to.have.keys('buy', 'sell', 'date'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/btc/price",
+              "host": ["{{apiUrl}}"],
+              "path": ["btc", "price"]
+            }
+          }
+        },
+        {
+          "name": "Purchase",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('R$ 500 left in the balance', () => pm.expect(pm.response.json().balance).to.eql('500.00'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{apiUrl}}/btc/purchase",
+              "host": ["{{apiUrl}}"],
+              "path": ["btc", "purchase"]
+            }
+          }
+        },
+        {
+          "name": "Position",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('lists the investment', () => pm.expect(pm.response.json().investments).to.have.lengthOf(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiUrl}}/btc", "host": ["{{apiUrl}}"], "path": ["btc"] }
+          }
+        },
+        {
+          "name": "Sell",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('partial sale reinvests the residual', () => pm.expect(pm.response.json().reinvestment).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "description": "Partial sale: the investment is fully liquidated and the residual is reinvested at the original quote (SELL + REINVESTMENT in the statement).",
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 200\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{apiUrl}}/btc/sell", "host": ["{{apiUrl}}"], "path": ["btc", "sell"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Extract (last 90 days)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const types = pm.response.json().items.map((i) => i.type);",
+                  "pm.test('has deposit, purchase, sell and reinvestment', () =>",
+                  "  pm.expect(types).to.include.members(['DEPOSIT', 'PURCHASE', 'SELL', 'REINVESTMENT']));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiUrl}}/extract", "host": ["{{apiUrl}}"], "path": ["extract"] }
+          }
+        },
+        {
+          "name": "Extract (custom range)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// last 7 days, as plain dates (YYYY-MM-DD); \"to\" includes the whole day",
+                  "const day = (d) => d.toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('from', day(new Date(Date.now() - 7 * 864e5)));",
+                  "pm.collectionVariables.set('to', day(new Date(Date.now() + 864e5)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('returns the items', () => pm.expect(pm.response.json().items).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiUrl}}/extract?from={{from}}&to={{to}}",
+              "host": ["{{apiUrl}}"],
+              "path": ["extract"],
+              "query": [
+                { "key": "from", "value": "{{from}}" },
+                { "key": "to", "value": "{{to}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Volume",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('returns buy and sell', () => pm.expect(pm.response.json()).to.include.keys('buy', 'sell'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiUrl}}/volume", "host": ["{{apiUrl}}"], "path": ["volume"] }
+          }
+        },
+        {
+          "name": "History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('returns a list', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{apiUrl}}/history", "host": ["{{apiUrl}}"], "path": ["history"] }
+          }
+        }
+      ]
     }
   ]
 }

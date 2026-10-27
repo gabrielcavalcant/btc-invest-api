@@ -100,7 +100,11 @@ Valores monetários vão e voltam como **string decimal** (`"1500.00"`, `"0.0043
 Erros seguem sempre o formato `{ "error": { "code", "message", "details?" } }`:
 `400` validação · `401` não autenticado/credenciais inválidas · `404` não encontrado · `409` e-mail já cadastrado · `422` saldo ou investimento insuficiente · `429` excesso de requisições · `503` cotação indisponível.
 
-Uma collection do Postman está em [`docs/btc-invest.postman_collection.json`](docs/btc-invest.postman_collection.json) (o request de login salva o token automaticamente).
+Uma collection do Postman está em [`docs/btc-invest.postman_collection.json`](docs/btc-invest.postman_collection.json), com as mesmas rotas da collection de exemplo do desafio. Importe e rode em ordem (ou tudo pelo Runner): "Create Account" gera um e-mail novo a cada execução, "Login" salva o token na variável `{{token}}` e cada request confere o status e o conteúdo da resposta. A URL fica na variável `{{apiUrl}}` (padrão `http://localhost:3000`). Também roda pelo terminal, com a API no ar:
+
+```bash
+npx newman run docs/btc-invest.postman_collection.json
+```
 
 <details>
 <summary>Exemplos de resposta</summary>
