@@ -32,7 +32,6 @@ export async function buildApp(deps: AppDeps, logger: FastifyServerOptions['logg
     logger,
     trustProxy: true,
     bodyLimit: 16 * 1024,
-    disableRequestLogging: false,
   });
 
   app.setErrorHandler((error, request, reply) => errorHandler(error, request, reply));
