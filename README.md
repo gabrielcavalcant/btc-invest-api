@@ -4,6 +4,10 @@ API de investimento em Bitcoin: cadastro e login com JWT, depósitos em reais, c
 
 **Stack:** Node.js 22 · TypeScript · Fastify 5 · PostgreSQL 16 · TypeORM (migrations) · Redis (cache + filas BullMQ) · Zod · SendGrid · Docker
 
+Documentação interativa (Swagger) em `http://localhost:3000/docs`, com todos os endpoints testáveis pelo navegador:
+
+![Swagger da BTC Invest API com os endpoints agrupados](docs/images/swagger-overview.png)
+
 ---
 
 ## Como executar (Linux)
@@ -163,6 +167,10 @@ O enunciado diz que, numa venda parcial, o investimento é liquidado e o troco �
 Na leitura adotada, o novo investimento guarda a **cotação original (R$ 100.000) como referência** e a **data original**, então a posição continua mostrando a variação real (+100%) e ele mantém o lugar na fila FIFO.
 
 No extrato, o lançamento `REINVESTMENT` traz o **valor do troco a preço de hoje** (R$ 1.500, para que `SELL − REINVESTMENT` = valor sacado) e a **cotação original** como referência. Por isso, quando o preço mudou, `valor ÷ cotação` não é igual à quantidade de BTC — é esperado, e a quantidade mostrada é a que de fato ficou investida.
+
+Uma venda parcial de R$ 3.500 executada no Swagger, com dois investimentos (R$ 3.000 + R$ 2.000): os dois são liquidados (FIFO), o saldo recebe exatamente R$ 3.500 e o troco volta como reinvestimento:
+
+![Venda parcial no Swagger: dois investimentos liquidados e o troco reinvestido](docs/images/swagger-sell.png)
 
 ## Arquitetura
 
