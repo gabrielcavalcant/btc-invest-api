@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: btc_invest
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # TCP check: during the first boot Postgres runs the init scripts on a temporary,
+      # socket-only server, so a plain `pg_isready` reports healthy before the real one is up
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U postgres -d btc_invest']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Applies the migrations once and exits
+  migrate:
+    build: .
+    command: ['node', 'dist/infra/database/migrate.js']
+    env_file: .env
+    environment: &docker-env
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/btc_invest
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: .
+    command: ['node', 'dist/server.js']
+    env_file: .env
+    environment: *docker-env
+    ports:
+      - '3000:3000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ['node', 'dist/worker.js']
+    env_file: .env
+    environment: *docker-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
