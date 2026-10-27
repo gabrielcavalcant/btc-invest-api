@@ -54,6 +54,16 @@ npm run start:worker  # worker
 
 ## Testes
 
+**Só com Docker** (sem instalar Node): roda os testes unitários e os ponta a ponta dentro de um container, com PostgreSQL e Redis reais, e encerra mostrando o resultado.
+
+```bash
+docker compose run --rm --build test
+```
+
+O serviço `test` fica num *profile* separado: o `docker compose up` normal não o inicia, e a imagem da API não leva os testes. Ele usa um banco próprio (`btc_invest_test`) e o database `1` do Redis, então não apaga os dados da aplicação.
+
+**Com Node 22 local:**
+
 ```bash
 npm test            # unitários + HTTP (sem banco, Redis ou internet)
 npm run test:e2e    # ponta a ponta com PostgreSQL e Redis reais

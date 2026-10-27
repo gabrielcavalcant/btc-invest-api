@@ -3,6 +3,5 @@ dist
 coverage
 .env
 .git
-test
 docs
 *.md
