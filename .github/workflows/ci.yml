@@ -35,3 +35,46 @@ jobs:
       - run: npm test
       - run: npm run test:e2e
       - run: npm run build
+
+  web:
+    name: Web (typecheck, lint, tests, build)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  full-stack:
+    name: Full stack (Docker Compose + browser e2e)
+    runs-on: ubuntu-24.04
+    needs: [api, web]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: cp .env.example .env
+      - run: docker compose up -d --build api web
+      # Containers up is not API ready: wait until it answers through nginx
+      - run: |
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8080/api/health && exit 0
+            sleep 2
+          done
+          exit 1
+      - working-directory: web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - if: failure()
+        run: docker compose logs api web
