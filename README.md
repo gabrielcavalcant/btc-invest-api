@@ -1,8 +1,11 @@
 # BTC Invest API
 
-API de investimento em Bitcoin: cadastro e login com JWT, depósitos em reais, compra e venda de BTC pela cotação do Mercado Bitcoin, posição dos investimentos, extrato, volume diário e histórico de cotações de 10 em 10 minutos.
+API de investimento em Bitcoin: cadastro e login com JWT, depósitos em reais, compra e venda de BTC pela cotação do Mercado Bitcoin, posição dos investimentos, extrato, volume diário e histórico de cotações de 10 em 10 minutos. Inclui um **front-end em React** ([`web/`](#front-end-web)) que consome a API.
 
 **Stack:** Node.js 22 · TypeScript · Fastify 5 · PostgreSQL 16 · TypeORM (migrations) · Redis (cache + filas BullMQ) · Zod · SendGrid · Docker
+**Front-end:** React 19 · TypeScript · Vite · Tailwind CSS 4 · TanStack Query · React Hook Form + Zod · Recharts · Vitest · Playwright
+
+![Painel do front-end: patrimônio, cotação ao vivo e investimentos](docs/images/web-dashboard-dark.png)
 
 Documentação interativa (Swagger) em `http://localhost:3000/docs`, com todos os endpoints testáveis pelo navegador:
 
@@ -18,11 +21,11 @@ Pré-requisitos: Docker e Docker Compose.
 
 ```bash
 cp .env.example .env          # ajuste JWT_SECRET (e SENDGRID_API_KEY, se quiser e-mails reais)
-docker compose up -d --build  # postgres, redis, migrations, api e worker
+docker compose up -d --build  # postgres, redis, migrations, api, worker e web
 curl http://localhost:3000/health
 ```
 
-A API sobe em `http://localhost:3000` e a **documentação interativa (Swagger)** em **`http://localhost:3000/docs`**: crie uma conta, faça login, clique em **Authorize**, cole o token e teste todos os endpoints pelo navegador. As migrations rodam automaticamente (serviço `migrate`) antes da API e do worker.
+O **front-end** sobe em **`http://localhost:8080`** (crie uma conta e use pelo navegador). A API sobe em `http://localhost:3000` e a **documentação interativa (Swagger)** em **`http://localhost:3000/docs`**: crie uma conta, faça login, clique em **Authorize**, cole o token e teste todos os endpoints pelo navegador. As migrations rodam automaticamente (serviço `migrate`) antes da API e do worker.
 
 Logs: `docker compose logs -f api worker`
 
@@ -74,7 +77,55 @@ npm run lint
 - **`npm test`** cobre as regras de negócio (dinheiro em inteiros, FIFO, reinvestimento, posição, extrato, volume, histórico) e a camada HTTP inteira via `fastify.inject`, usando adaptadores em memória.
 - **`npm run test:e2e`** precisa de `docker compose up -d postgres redis` e usa o banco de `TEST_DATABASE_URL` (as tabelas dele são **apagadas** a cada execução) e o Redis de `TEST_REDIS_URL` (padrão: database lógico `1`, para não apagar as filas da aplicação). Inclui um teste de concorrência: 6 compras simultâneas com saldo para 2 → exatamente 2 aprovadas e saldo final zero.
 - **`npm run demo:swagger`** é uma demonstração visual com Playwright: com a API no ar, abre um navegador e usa o Swagger sozinho em 18 passos (cadastro, login, Authorize, depósito, compra, venda parcial, extrato, volume, histórico e casos de erro). Ele preenche os formulários, clica em Execute e confere o status HTTP de cada resposta. Antes, rode `npx playwright install chromium` uma vez. `DEMO_HEADLESS=true` roda sem janela; `DEMO_VIDEO_DIR=pasta` grava um vídeo `.webm`.
-- Há um workflow do GitHub Actions (`.github/workflows/ci.yml`) rodando typecheck, lint, testes e build.
+- Há um workflow do GitHub Actions (`.github/workflows/ci.yml`) com três jobs: **API** (typecheck, lint, unitários, e2e com PostgreSQL e Redis, build), **Web** (typecheck, lint, unitários, build) e **Full stack**, que sobe tudo com Docker Compose e roda os testes de navegador do front contra a API real.
+
+## Front-end (`web/`)
+
+Aplicação React que consome a API: cadastro e login, painel com patrimônio e cotação ao vivo, depósito, compra e venda de BTC, posição dos investimentos, extrato com filtros e exportação em CSV, volume do dia e gráfico do histórico de 24 h. Tema escuro (padrão) e claro.
+
+**Responsivo:** no desktop, barra lateral e tabelas para comparar os investimentos lado a lado; no celular, navegação na barra inferior e cada investimento e lançamento do extrato vira um cartão, legível sem rolar para o lado. Testado de 375 px (iPhone SE) a telas largas, e os testes de navegador rodam nos dois formatos.
+
+| Painel (tema claro)                                          | Mercado                                          | Extrato                                   |
+| ------------------------------------------------------------ | ------------------------------------------------ | ----------------------------------------- |
+| ![Painel no tema claro](docs/images/web-dashboard-light.png) | ![Página de mercado](docs/images/web-market.png) | ![Extrato](docs/images/web-statement.png) |
+
+| Celular: painel                                  | Celular: investimentos                                                         | Celular: extrato                                            | Login                                       |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------- |
+| ![Painel no celular](docs/images/web-mobile.png) | ![Investimentos em cartões no celular](docs/images/web-mobile-investments.png) | ![Extrato no celular](docs/images/web-mobile-statement.png) | ![Tela de login](docs/images/web-login.png) |
+
+**Como rodar**
+
+- **Com Docker:** já sobe junto no `docker compose up -d --build`, em `http://localhost:8080`. O build estático é servido pelo nginx, que também repassa `/api/*` para a API: front e API ficam na mesma origem, sem CORS.
+- **Em desenvolvimento** (Node 22, com a API no ar em `:3000`):
+
+```bash
+cd web
+npm install
+npm run dev        # http://localhost:5173 (o Vite repassa /api/* para a API)
+```
+
+**Testes**
+
+```bash
+cd web
+npm test           # unitários e de componentes (Vitest + Testing Library), sem API
+npm run test:e2e   # navegador real (Playwright), desktop e celular, contra a stack do Docker
+npm run typecheck
+npm run lint
+```
+
+**Demonstração visual automática:** com a stack no ar, `cd web && npm run demo` abre um navegador e usa o front sozinho em 18 passos (login e cadastro com validações, depósito, compras, bloqueio de valores acima do saldo, venda parcial com reinvestimento, extrato com filtros e CSV, mercado, temas, layout de celular e saída), conferindo cada um. `npm run demo:mobile` faz os mesmos 18 passos numa tela de celular (toque, barra inferior e cartões). `DEMO_HEADLESS=true` roda sem janela.
+
+O teste de navegador cria uma conta nova, deposita, compra duas vezes, faz uma venda parcial (conferindo o reinvestimento) e confere tudo no extrato. Antes, rode `npx playwright install chromium` uma vez.
+
+**Decisões**
+
+- **Mesmas regras de dinheiro da API:** a API envia valores como texto (`"1500.00"`), e o front formata, soma e estima com `bigint` (centavos e satoshis), nunca com ponto flutuante. A prévia de compra e venda arredonda como a API (BTC da compra para baixo, satoshis da venda para cima).
+- **Validação antes de chamar a API:** os formulários usam Zod com as mesmas regras do back-end, e os erros da API (`{ error: { code, message } }`) viram mensagens em português.
+- **Dados do servidor com TanStack Query:** cache, carregamento e atualização automática (cotação a cada 10 s, igual ao cache da API). Depois de uma operação, só é recarregado o que ela alterou.
+- **Sessão:** o token fica em `sessionStorage` (termina com a aba), e um 401 encerra a sessão e volta ao login.
+- **Desempenho:** a biblioteca de gráficos só é carregada ao abrir a página Mercado. O minigráfico do painel é um SVG simples, sem biblioteca.
+- **Acessibilidade:** modais com `role="dialog"` e Esc, campos com rótulo e mensagem de erro associada, navegação por teclado e respeito a `prefers-reduced-motion`.
 
 ## Endpoints
 
