@@ -67,6 +67,15 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Front-end (React): static build served by nginx, which also forwards /api/* to the API
+  web:
+    build: ./web
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+    restart: unless-stopped
+
   # Unit + e2e tests in a container, only Docker needed: docker compose run --rm test
   # (profile "test": not started by "docker compose up"). Uses its own database and
   # Redis db 1, because the e2e tests wipe them.

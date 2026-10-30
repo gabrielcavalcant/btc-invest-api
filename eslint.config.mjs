@@ -2,7 +2,8 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/', 'node_modules/', 'coverage/'] },
+  // web/ is the front-end: it has its own ESLint config (React, browser globals)
+  { ignores: ['dist/', 'node_modules/', 'coverage/', 'web/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

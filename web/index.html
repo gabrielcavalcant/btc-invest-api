@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#07090f" />
+    <meta name="description" content="Invista em Bitcoin com a cotação do Mercado Bitcoin." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>BTC Invest</title>
+    <script>
+      // Theme before the first paint (no flash): saved choice, otherwise dark
+      try {
+        if (localStorage.getItem('btc-invest.theme') === 'light') {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

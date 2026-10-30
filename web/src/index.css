@@ -1,0 +1,171 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/space-grotesk';
+
+/* Theme switch: <html class="dark"> (set before the first paint, see index.html) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic color tokens. Components use bg-surface, text-fg, border-line... and never
+ * raw colors, so the light and dark themes only differ here.
+ */
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f8;
+  --line: #e3e7ef;
+  --fg: #0d1321;
+  --muted: #5b6478;
+  --subtle: #8a93a6;
+  --up: #059669;
+  --up-soft: #d1fae5;
+  --down: #e11d48;
+  --down-soft: #ffe4e6;
+  --glow: rgb(247 147 26 / 0.18);
+}
+
+.dark {
+  --bg: #07090f;
+  --surface: #0e121c;
+  --surface-2: #151a27;
+  --line: #222a3b;
+  --fg: #eef1f7;
+  --muted: #98a2b8;
+  --subtle: #6b7489;
+  --up: #34d399;
+  --up-soft: rgb(52 211 153 / 0.12);
+  --down: #fb7185;
+  --down-soft: rgb(251 113 133 / 0.12);
+  --glow: rgb(247 147 26 / 0.14);
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', ui-sans-serif, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-up: var(--up);
+  --color-up-soft: var(--up-soft);
+  --color-down: var(--down);
+  --color-down-soft: var(--down-soft);
+
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fbaa45;
+  --color-brand-500: #f7931a;
+  --color-brand-600: #e07d0c;
+  --color-brand-700: #b45f06;
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-flash-up: flash-up 1.2s ease-out;
+  --animate-flash-down: flash-down 1.2s ease-out;
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A changed price glows green or red for a moment */
+@keyframes flash-up {
+  from {
+    color: var(--up);
+    text-shadow: 0 0 18px var(--up);
+  }
+}
+
+@keyframes flash-down {
+  from {
+    color: var(--down);
+    text-shadow: 0 0 18px var(--down);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(52 211 153 / 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(52 211 153 / 0);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Soft orange glow at the top of every page */
+.app-backdrop {
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, var(--glow), transparent 60%),
+    radial-gradient(40rem 24rem at -10% 10%, rgb(99 102 241 / 0.06), transparent 60%);
+}
+
+/* Tabular figures keep columns of money aligned */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Stagger helper: children fade in one after the other */
+.stagger > * {
+  animation: var(--animate-fade-up);
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
