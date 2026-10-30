@@ -2,13 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { api } from '../api/endpoints';
 import { signIn, takeSignOutReason } from '../auth/session';
 import { Alert, Button, Input, PasswordInput } from '../components/ui';
 import { errorMessage } from '../lib/errors';
 import { loginSchema, type LoginForm } from '../lib/schemas';
-import { AuthLayout } from './AuthLayout';
+import { AuthAlternative, AuthLayout } from './AuthLayout';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -30,18 +30,12 @@ export function LoginPage() {
   });
 
   return (
-    <AuthLayout
-      title="Entrar"
-      subtitle={
-        <>
-          Ainda não tem conta?{' '}
-          <Link to="/cadastro" className="font-semibold text-brand-500 hover:underline">
-            Criar conta
-          </Link>
-        </>
-      }
-    >
-      <form noValidate className="space-y-4" onSubmit={handleSubmit((data) => login.mutate(data))}>
+    <AuthLayout title="Entrar" subtitle="Acesse sua conta para investir em Bitcoin.">
+      <form
+        noValidate
+        className="space-y-4 [@media(max-height:820px)]:space-y-3"
+        onSubmit={handleSubmit((data) => login.mutate(data))}
+      >
         {signOutReason === 'expired' && !login.isError && (
           <Alert tone="info">Sua sessão expirou. Entre novamente.</Alert>
         )}
@@ -63,6 +57,12 @@ export function LoginPage() {
           Entrar
         </Button>
       </form>
+      <AuthAlternative
+        question="Ainda não tem conta?"
+        to="/cadastro"
+        label="Criar conta"
+        prominent
+      />
     </AuthLayout>
   );
 }
