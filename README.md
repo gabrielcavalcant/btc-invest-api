@@ -114,7 +114,7 @@ npm run typecheck
 npm run lint
 ```
 
-**Demonstração visual automática:** com a stack no ar, `cd web && npm run demo` abre um navegador e usa o front sozinho em 18 passos (login e cadastro com validações, depósito, compras, bloqueio de valores acima do saldo, venda parcial com reinvestimento, extrato com filtros e CSV, mercado, temas, layout de celular e saída), conferindo cada um. `npm run demo:mobile` faz os mesmos 18 passos numa tela de celular (toque, barra inferior e cartões). `DEMO_HEADLESS=true` roda sem janela.
+**Demonstração visual automática** (Node 22.6+): com a stack no ar, `cd web && npm install && npm run demo` abre um navegador e usa o front sozinho em 18 passos (login e cadastro com validações, depósito, compras, bloqueio de valores acima do saldo, venda parcial com reinvestimento, extrato com filtros e CSV, mercado, temas, layout de celular e saída), conferindo cada um. `npm run demo:mobile` faz os mesmos 18 passos numa tela de celular (toque, barra inferior e cartões). `DEMO_HEADLESS=true` roda sem janela.
 
 O teste de navegador cria uma conta nova, deposita, compra duas vezes, faz uma venda parcial (conferindo o reinvestimento) e confere tudo no extrato. Antes, rode `npx playwright install chromium` uma vez.
 
