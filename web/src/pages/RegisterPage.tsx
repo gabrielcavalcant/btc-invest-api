@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { ApiError } from '../api/client';
 import { api } from '../api/endpoints';
 import { signIn } from '../auth/session';
@@ -9,7 +9,7 @@ import { Alert, Button, Input, PasswordInput } from '../components/ui';
 import { useToast } from '../components/toast';
 import { errorMessage } from '../lib/errors';
 import { registerSchema, type RegisterForm } from '../lib/schemas';
-import { AuthLayout } from './AuthLayout';
+import { AuthAlternative, AuthLayout } from './AuthLayout';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -47,18 +47,12 @@ export function RegisterPage() {
   const conflict = signUp.error instanceof ApiError && signUp.error.code === 'CONFLICT';
 
   return (
-    <AuthLayout
-      title="Criar conta"
-      subtitle={
-        <>
-          Já tem conta?{' '}
-          <Link to="/login" className="font-semibold text-brand-500 hover:underline">
-            Entrar
-          </Link>
-        </>
-      }
-    >
-      <form noValidate className="space-y-4" onSubmit={handleSubmit((data) => signUp.mutate(data))}>
+    <AuthLayout title="Criar conta" subtitle="Leva menos de um minuto.">
+      <form
+        noValidate
+        className="space-y-4 [@media(max-height:820px)]:space-y-3"
+        onSubmit={handleSubmit((data) => signUp.mutate(data))}
+      >
         {signUp.isError && !conflict && <Alert>{errorMessage(signUp.error)}</Alert>}
         <Input
           label="Nome"
@@ -90,6 +84,7 @@ export function RegisterPage() {
           Criar conta
         </Button>
       </form>
+      <AuthAlternative question="Já tem conta?" to="/login" label="Entrar" />
     </AuthLayout>
   );
 }

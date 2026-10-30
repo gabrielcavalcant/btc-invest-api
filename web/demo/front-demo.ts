@@ -34,6 +34,9 @@ interface Step {
   run: (page: Page) => Promise<void>;
 }
 
+/** Size of the desktop page, restored after the phone-layout step */
+let desktopSize = { width: 1280, height: 800 };
+
 const steps: Step[] = [
   {
     title: 'Sem sessão, vai para o login',
@@ -225,7 +228,7 @@ const steps: Step[] = [
         .click();
       await expect(page.getByRole('heading', { name: 'Painel' })).toBeVisible();
       await pause(page);
-      if (!MOBILE) await page.setViewportSize({ width: 1280, height: 800 });
+      if (!MOBILE) await page.setViewportSize(desktopSize);
     },
   },
   {
@@ -242,18 +245,20 @@ async function main() {
   const browser = await chromium.launch({
     headless: HEADLESS,
     slowMo: HEADLESS ? 0 : 60,
-    args: ['--window-position=0,0'],
+    // desktop window maximized, so the whole page fits any screen; the phone sits in a corner
+    args: MOBILE ? ['--window-position=0,0'] : ['--start-maximized'],
   });
   const page = await browser.newPage({
     ...(MOBILE
       ? // a phone (touch, mobile user agent) small enough for the window to fit a laptop screen
         { ...devices['Pixel 7'], viewport: { width: 375, height: 600 } }
-      : { viewport: { width: 1280, height: 800 } }),
+      : { viewport: HEADLESS ? { width: 1280, height: 800 } : null }),
     baseURL: BASE_URL,
     locale: 'pt-BR',
     acceptDownloads: true,
   });
   page.setDefaultTimeout(TIMEOUT);
+  desktopSize = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
 
   const screen = MOBILE ? 'celular' : 'desktop';
   console.log(`Demonstração do front (${screen}) em ${BASE_URL} (conta ${email})\n`);
